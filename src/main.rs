@@ -1,6 +1,9 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+use color;
+use vec3;
+
 fn main() -> std::io::Result<()> {
     let mut file = File::create("image.ppm")?;
 
@@ -16,11 +19,9 @@ fn main() -> std::io::Result<()> {
             let g: f32 = i as f32 / ((image_height - 1) as f32);
             let b: f32 = 0.0;
 
-            let ir = (255.999 * r) as i32;
-            let ig = (255.999 * g) as i32;
-            let ib = (255.999 * b) as i32;
+            color = vec3 { x: r, y: g, z: b };
 
-            file.write_all(format!("{} {} {}\n", ir, ig, ib).as_bytes());
+            file.write_all(write_color());
         }
     }
     println!("Done!");
