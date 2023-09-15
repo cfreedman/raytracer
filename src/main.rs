@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::prelude::*;
 
-use color;
-use vec3;
+mod color;
+mod vec3;
 
 fn main() -> std::io::Result<()> {
     let mut file = File::create("image.ppm")?;
@@ -19,9 +19,9 @@ fn main() -> std::io::Result<()> {
             let g: f32 = i as f32 / ((image_height - 1) as f32);
             let b: f32 = 0.0;
 
-            color = vec3 { x: r, y: g, z: b };
+            let color = vec3::Vec3 { x: r, y: g, z: b };
 
-            file.write_all(write_color());
+            file.write_all(color::write_color(&color));
         }
     }
     println!("Done!");
