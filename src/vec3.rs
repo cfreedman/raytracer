@@ -1,7 +1,7 @@
-// Defining Vec3 class
-
 use std::ops::{Add, Mul, Sub};
 
+// Defining Vec3 class
+#[derive(Clone, Copy)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -54,14 +54,6 @@ impl Add for Vec3 {
     }
 }
 
-pub fn add(first_vec: &Vec3, second_vec: &Vec3) -> Vec3 {
-    Vec3 {
-        x: first_vec.x + second_vec.x,
-        y: first_vec.y + second_vec.y,
-        z: first_vec.z + second_vec.z,
-    }
-}
-
 impl Sub for Vec3 {
     type Output = Self;
 
@@ -70,23 +62,7 @@ impl Sub for Vec3 {
     }
 }
 
-pub fn minus(first_vec: &Vec3, second_vec: &Vec3) -> Vec3 {
-    Vec3 {
-        x: first_vec.x - second_vec.x,
-        y: first_vec.y - second_vec.y,
-        z: first_vec.z - second_vec.z,
-    }
-}
-
-pub fn vec_mult(first_vec: &Vec3, second_vec: &Vec3) -> Vec3 {
-    Vec3 {
-        x: first_vec.x * second_vec.x,
-        y: first_vec.y * second_vec.y,
-        z: first_vec.z * second_vec.z,
-    }
-}
-
-impl Mul for Vec3 {
+impl Mul<Vec3> for Vec3 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self::Output {
@@ -94,19 +70,19 @@ impl Mul for Vec3 {
     }
 }
 
-pub fn constant_mult(vec: &Vec3, constant: &f32) -> Vec3 {
-    Vec3 {
-        x: vec.x * constant,
-        y: vec.y * constant,
-        z: vec.z * constant,
+impl Mul<Vec3> for f32 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Self::Output {
+        Self::Output::new(self * other.x, self * other.y, self * other.z)
     }
 }
 
-pub fn dot_product(first_vec: &Vec3, second_vec: &Vec3) -> f32 {
+pub fn dot(first_vec: Vec3, second_vec: Vec3) -> f32 {
     first_vec.x * second_vec.x + first_vec.y * second_vec.y + first_vec.z * second_vec.z
 }
 
-pub fn cross_product(first_vec: &Vec3, second_vec: &Vec3) -> Vec3 {
+pub fn cross(first_vec: Vec3, second_vec: Vec3) -> Vec3 {
     Vec3 {
         x: first_vec.y * second_vec.z - first_vec.z * second_vec.y,
         y: first_vec.z * second_vec.x - first_vec.x * second_vec.z,
@@ -114,6 +90,6 @@ pub fn cross_product(first_vec: &Vec3, second_vec: &Vec3) -> Vec3 {
     }
 }
 
-pub fn unit_vec(vec: &Vec3) -> Vec3 {
-    constant_mult(vec, &((1 as f32) / vec.length()))
+pub fn unit_vec(vec: Vec3) -> Vec3 {
+    (1. / vec.length()) * vec
 }
