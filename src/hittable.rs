@@ -1,3 +1,4 @@
+use crate::interval::*;
 use crate::ray::*;
 use crate::vec3::*;
 
@@ -21,7 +22,7 @@ impl HitData {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: Ray, ray_tmin: f32, ray_tmax: f32, hit_data: &mut HitData) -> bool;
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool;
 }
 
 #[derive(Default)]
@@ -36,13 +37,17 @@ impl HittableList {
         self.clear()
     }
 
-    pub fn hit(&self, ray: Ray, ray_tmin: f32, ray_tmax: f32, hit_data: &mut HitData) -> bool {
+    pub fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
         let mut temp_hit_data = HitData::default();
         let mut hit_anything = false;
-        let mut closest_hit = ray_tmax;
+        let mut closest_hit = interval.max;
 
         for object in self.0.iter() {
-            if object.hit(ray, ray_tmin, closest_hit, &mut temp_hit_data) {
+            if object.hit(
+                ray,
+                Interval::new(interval.min, closest_hit),
+                &mut temp_hit_data,
+            ) {
                 hit_anything = true;
                 closest_hit = temp_hit_data.hit_along_ray;
                 *hit_data = temp_hit_data;
@@ -59,7 +64,7 @@ pub struct Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: Ray, ray_tmin: f32, ray_tmax: f32, hit_data: &mut HitData) -> bool {
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
         let origin_gap = self.center - ray.origin;
         // Quadratic constants for solving the ray intersection equation
         let a = ray.direction.length_squared();
@@ -73,9 +78,9 @@ impl Hittable for Sphere {
         }
 
         let mut ray_hit = (h - discriminant.sqrt()) / a;
-        if (ray_hit <= ray_tmin) || (ray_hit >= ray_tmax) {
+        if !interval.surrounds(ray_hit) {
             ray_hit = (h + discriminant.sqrt()) / a;
-            if (ray_hit <= ray_tmin) || (ray_hit >= ray_tmax) {
+            if !interval.surrounds(ray_hit) {
                 return false;
             }
         }

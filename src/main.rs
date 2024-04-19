@@ -4,6 +4,8 @@ use std::io::{prelude::*, Error};
 mod color;
 mod hittable;
 use hittable::{HitData, HittableList, Sphere};
+mod interval;
+use interval::*;
 mod ray;
 use ray::*;
 mod vec3;
@@ -11,7 +13,7 @@ use vec3::*;
 
 pub fn ray_color(ray: Ray, world: &HittableList) -> Vec3 {
     let mut hit_data = HitData::default();
-    if world.hit(ray, 0., 1000000., &mut hit_data) {
+    if world.hit(ray, Interval::new(0., f32::INFINITY), &mut hit_data) {
         return 0.5 * (hit_data.normal + Vec3::new(1., 1., 1.));
     }
 
