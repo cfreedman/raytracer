@@ -2,27 +2,38 @@ use std::fs::File;
 use std::io::{prelude::*, Error};
 
 mod color;
+mod hittable;
+use hittable::{HitData, HittableList, Sphere};
 mod ray;
 use ray::*;
 mod vec3;
 use vec3::*;
 
-pub fn ray_color(ray: Ray) -> Vec3 {
-    if hit_sphere(Vec3::new(0., 0., -1.), 0.5, ray) {
-        return Vec3::new(1., 0., 0.);
+pub fn ray_color(ray: Ray, world: &HittableList) -> Vec3 {
+    let mut hit_data = HitData::default();
+    if world.hit(ray, 0., 1000000., &mut hit_data) {
+        return 0.5 * (hit_data.normal + Vec3::new(1., 1., 1.));
     }
-    let unit_direction = ray.direction;
+
+    let unit_direction = ray.direction.unit();
     let a = 0.5 * (unit_direction.y + 1.);
     (1. - a) * Vec3::new(1., 1., 1.) + a * Vec3::new(0.5, 0.7, 1.)
 }
 
-pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) -> bool {
+pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) -> f32 {
     let origin_gap = center - ray.origin;
     // Quadratic constants for solving the ray intersection equation
-    let a = dot(ray.direction, ray.direction);
-    let b = -2. * dot(ray.direction, origin_gap);
-    let c = dot(origin_gap, origin_gap) - radius * radius;
-    b * b - 4. * a * c >= 0.
+    let a = ray.direction.length_squared();
+    // Use scaled parameter for symplicity h = b / -2
+    let h = dot(ray.direction, origin_gap);
+    let c = origin_gap.length_squared() - radius * radius;
+    let discriminant = h * h - a * c;
+
+    if discriminant < 0. {
+        -1.
+    } else {
+        (h - discriminant.sqrt()) / a
+    }
 }
 
 fn main() -> Result<(), Error> {
@@ -30,6 +41,18 @@ fn main() -> Result<(), Error> {
     let aspect_ratio: f32 = 16.0 / 9.0;
     let image_width: u32 = 400;
     let image_height: u32 = (image_width as f32 / aspect_ratio) as u32;
+
+    // World
+
+    let mut world = HittableList::default();
+    world.add(Box::new(Sphere {
+        center: Vec3::new(0., 0., -1.),
+        radius: 0.5,
+    }));
+    world.add(Box::new(Sphere {
+        center: Vec3::new(0., -100.5, -1.),
+        radius: 100.,
+    }));
 
     // Camera
     let focal_length = 1.0;
@@ -60,11 +83,11 @@ fn main() -> Result<(), Error> {
                 pixel00_location + (i as f32) * pixel_delta_u + (j as f32) * pixel_delta_v;
             let ray_direction = pixel_center - camera_center;
             let r = Ray {
-                origin: pixel_center,
+                origin: camera_center,
                 direction: ray_direction,
             };
 
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(r, &world);
             file.write_all(&color::write_color(&pixel_color));
         }
     }
