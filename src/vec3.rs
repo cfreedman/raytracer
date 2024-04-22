@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, AddAssign, Mul, Sub};
 
 // Defining Vec3 class
 #[derive(Clone, Copy, Default, Debug)]
@@ -55,6 +55,16 @@ impl Add for Vec3 {
 
     fn add(self, other: Self) -> Self::Output {
         Self::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+impl AddAssign for Vec3 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
     }
 }
 

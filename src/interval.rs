@@ -30,6 +30,16 @@ impl Interval {
         self.min < x && x < self.max
     }
 
+    pub fn clamp(&self, x: f32) -> f32 {
+        if x < self.min {
+            return self.min;
+        };
+        if x > self.max {
+            return self.max;
+        };
+        x
+    }
+
     pub const EMPTY: Self = Self {
         min: f32::INFINITY,
         max: -f32::INFINITY,
