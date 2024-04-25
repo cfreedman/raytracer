@@ -18,10 +18,16 @@ pub struct Camera {
     pub pixel_delta_u: Vec3,
     pub pixel_delta_v: Vec3,
     pub samples_per_pixel: u32,
+    pub max_depth: u32,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f32, image_width: u32, samples_per_pixel: u32) -> Self {
+    pub fn new(
+        aspect_ratio: f32,
+        image_width: u32,
+        samples_per_pixel: u32,
+        max_depth: u32,
+    ) -> Self {
         let (image_height, camera_center, pixel00_location, pixel_delta_u, pixel_delta_v) =
             Camera::initialize(aspect_ratio, image_width);
         Self {
@@ -33,6 +39,7 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             samples_per_pixel,
+            max_depth,
         }
     }
 
@@ -51,10 +58,21 @@ impl Camera {
         Ray::new(self.camera_center, pixel_sample - self.camera_center)
     }
 
-    fn ray_color(ray: Ray, world: &HittableList) -> Vec3 {
+    fn ray_color(ray: Ray, depth: u32, world: &HittableList) -> Vec3 {
+        if depth <= 0 {
+            return Vec3::new(0., 0., 0.);
+        }
         let mut hit_data = HitData::default();
-        if world.hit(ray, Interval::new(0., f32::INFINITY), &mut hit_data) {
-            return 0.5 * (hit_data.normal + Vec3::new(1., 1., 1.));
+        if world.hit(ray, Interval::new(0.001, f32::INFINITY), &mut hit_data) {
+            let attenuation = Vec3::default();
+            let scattered = Vec3::default();
+            if hit_data
+                .material
+                .scatter(ray, hit_data, attenuation, scattered)
+            {
+                return attenuation * Self::ray_color(scattered, depth - 1, world);
+            }
+            return Vec3::new(0., 0., 0.);
         }
 
         let unit_direction = ray.direction.unit();
@@ -103,7 +121,7 @@ impl Camera {
                     let mut pixel_color = Vec3::new(0., 0., 0.);
                     for _sample in 0..self.samples_per_pixel {
                         let ray = self.get_ray(i, j);
-                        pixel_color += Self::ray_color(ray, world)
+                        pixel_color += Self::ray_color(ray, self.max_depth, world)
                     }
 
                     file.write_all(&write_color(

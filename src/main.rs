@@ -4,6 +4,7 @@ mod color;
 mod hittable;
 use hittable::{HittableList, Sphere};
 mod interval;
+mod material;
 mod ray;
 mod utilities;
 mod vec3;
@@ -22,6 +23,6 @@ fn main() {
     }));
 
     // Camera
-    let camera = Camera::new(16. / 9., 400, 100);
+    let camera = Camera::new(16. / 9., 400, 100, 50);
     camera.render(&world);
 }

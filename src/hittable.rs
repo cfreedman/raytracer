@@ -1,4 +1,5 @@
 use crate::interval::*;
+use crate::material::Material;
 use crate::ray::*;
 use crate::vec3::*;
 
@@ -8,6 +9,7 @@ pub struct HitData {
     pub point: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
+    pub material: Box<dyn Material>,
 }
 
 impl HitData {
@@ -61,6 +63,7 @@ impl HittableList {
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
+    pub material: Box<dyn Material>,
 }
 
 impl Hittable for Sphere {
@@ -89,6 +92,7 @@ impl Hittable for Sphere {
         hit_data.point = ray.at(ray_hit);
         let outward_normal = (1. / self.radius) * (hit_data.point - self.center);
         hit_data.set_face_normal(ray, outward_normal);
+        hit_data.material = self.material;
 
         true
     }
