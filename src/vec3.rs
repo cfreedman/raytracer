@@ -92,6 +92,14 @@ impl Vec3 {
     pub fn reflect(incoming: Vec3, normal: Vec3) -> Vec3 {
         incoming - 2. * dot(incoming, normal) * normal
     }
+
+    // Returns refracted vector passing through surface
+    pub fn refract(incoming: Vec3, normal: Vec3, ref_ratio: f32) -> Vec3 {
+        let cos_theta = (dot(-1. * incoming, normal)).min(1.);
+        let ref_vec_perp = ref_ratio * (incoming + cos_theta * normal);
+        let ref_vec_par = (-1. * (1. - ref_vec_perp.length_squared()).sqrt()) * normal;
+        ref_vec_perp + ref_vec_par
+    }
 }
 
 impl Add for Vec3 {

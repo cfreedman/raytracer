@@ -3,13 +3,24 @@ use crate::material::Material;
 use crate::ray::*;
 use crate::vec3::*;
 
-#[derive(Clone, Copy, Default, Debug)]
 pub struct HitData {
     pub hit_along_ray: f32,
     pub point: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
-    pub material: Box<dyn Material>,
+    pub material: Option<Material>,
+}
+
+impl Default for HitData {
+    fn default() -> Self {
+        Self {
+            hit_along_ray: 0.,
+            point: Vec3::default(),
+            normal: Vec3::default(),
+            front_face: false,
+            material: None,
+        }
+    }
 }
 
 impl HitData {
@@ -40,11 +51,13 @@ impl HittableList {
     }
 
     pub fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
-        let mut temp_hit_data = HitData::default();
         let mut hit_anything = false;
         let mut closest_hit = interval.max;
 
         for object in self.0.iter() {
+            // Define temp_hit_data in each loop iteration to avoid its moving
+            // across loop counts
+            let mut temp_hit_data = HitData::default();
             if object.hit(
                 ray,
                 Interval::new(interval.min, closest_hit),
@@ -63,7 +76,17 @@ impl HittableList {
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
-    pub material: Box<dyn Material>,
+    pub material: Material,
+}
+
+impl Sphere {
+    pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
+    }
 }
 
 impl Hittable for Sphere {
@@ -92,7 +115,7 @@ impl Hittable for Sphere {
         hit_data.point = ray.at(ray_hit);
         let outward_normal = (1. / self.radius) * (hit_data.point - self.center);
         hit_data.set_face_normal(ray, outward_normal);
-        hit_data.material = self.material;
+        hit_data.material = Some(self.material);
 
         true
     }

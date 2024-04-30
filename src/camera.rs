@@ -64,13 +64,12 @@ impl Camera {
         }
         let mut hit_data = HitData::default();
         if world.hit(ray, Interval::new(0.001, f32::INFINITY), &mut hit_data) {
-            let attenuation = Vec3::default();
-            let scattered = Vec3::default();
-            if hit_data
-                .material
-                .scatter(ray, hit_data, attenuation, scattered)
-            {
-                return attenuation * Self::ray_color(scattered, depth - 1, world);
+            let mut attenuation = Vec3::default();
+            let mut scattered = Ray::default();
+            if let Some(material) = hit_data.material {
+                if material.scatter(ray, hit_data, &mut attenuation, &mut scattered) {
+                    return attenuation * Self::ray_color(scattered, depth - 1, world);
+                }
             }
             return Vec3::new(0., 0., 0.);
         }
@@ -112,7 +111,7 @@ impl Camera {
     pub fn render(&self, world: &HittableList) {
         // File creation
         if let Ok(mut file) = File::create("image.ppm") {
-            file.write_all(
+            let _ = file.write_all(
                 format!("P3\n{} {}\n255\n", self.image_width, self.image_height).as_bytes(),
             );
 
@@ -124,7 +123,7 @@ impl Camera {
                         pixel_color += Self::ray_color(ray, self.max_depth, world)
                     }
 
-                    file.write_all(&write_color(
+                    let _ = file.write_all(&write_color(
                         (1. / self.samples_per_pixel as f32) * pixel_color,
                     ));
                 }
