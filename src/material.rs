@@ -51,10 +51,17 @@ impl Material {
                     dielectric.refractive_index
                 };
 
-                let ref_vec =
-                    Vec3::refract(ray_in.direction.unit(), hit_data.normal, adjusted_ref_ratio);
+                let norm_incoming_vec = ray_in.direction.unit();
+                let cos_theta = dot(-1. * norm_incoming_vec, hit_data.normal).min(1.);
+                let sin_theta = (1. - cos_theta * cos_theta).sqrt();
+
+                let direction = if adjusted_ref_ratio * sin_theta > 1. {
+                    Vec3::reflect(norm_incoming_vec, hit_data.normal)
+                } else {
+                    Vec3::refract(ray_in.direction.unit(), hit_data.normal, adjusted_ref_ratio)
+                };
                 *attenuation = Vec3::new(1., 1., 1.);
-                *scattered = Ray::new(hit_data.point, ref_vec);
+                *scattered = Ray::new(hit_data.point, direction);
                 true
             }
         }

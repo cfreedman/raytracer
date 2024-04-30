@@ -23,7 +23,7 @@ fn main() {
         albedo: Vec3::new(0.1, 0.2, 0.5),
     };
     let material_left = Dielectric {
-        refractive_index: 1.5,
+        refractive_index: 1. / 1.33,
     };
     let material_right = Metal {
         albedo: Vec3::new(0.8, 0.6, 0.2),
