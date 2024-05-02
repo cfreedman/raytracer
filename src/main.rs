@@ -1,4 +1,6 @@
 mod camera;
+use std::f32::consts::PI;
+
 use camera::Camera;
 mod color;
 mod hittable;
@@ -15,44 +17,59 @@ fn main() {
     // World
     let mut world = HittableList::default();
 
-    // Define several materials
-    let material_ground = Lambertian {
+    let material_ground = Material::Lambertian(Lambertian {
         albedo: Vec3::new(0.8, 0.8, 0.),
-    };
-    let material_center = Lambertian {
+    });
+    let material_center = Material::Lambertian(Lambertian {
         albedo: Vec3::new(0.1, 0.2, 0.5),
-    };
-    let material_left = Dielectric {
-        refractive_index: 1. / 1.33,
-    };
-    let material_right = Metal {
+    });
+    let material_left = Material::Dielectric(Dielectric {
+        refractive_index: 1.5,
+    });
+    let material_bubble = Material::Dielectric(Dielectric {
+        refractive_index: 1. / 1.5,
+    });
+    let material_right = Material::Metal(Metal {
         albedo: Vec3::new(0.8, 0.6, 0.2),
-        fuzz: 1.0,
-    };
+        fuzz: 1.,
+    });
 
-    // Add sphere objects to world scene
     world.add(Box::new(Sphere::new(
         Vec3::new(0., -100.5, -1.),
         100.,
-        Material::Lambertian(material_ground),
+        material_ground,
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(0., 0., -1.2),
         0.5,
-        Material::Lambertian(material_center),
+        material_center,
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(-1., 0., -1.),
         0.5,
-        Material::Dielectric(material_left),
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-1., 0., -1.),
+        0.4,
+        material_bubble,
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(1., 0., -1.),
         0.5,
-        Material::Metal(material_right),
+        material_right,
     )));
 
     // Camera
-    let camera = Camera::new(16. / 9., 400, 100, 50);
+    let camera = Camera::new(
+        16. / 9.,
+        400,
+        100,
+        50,
+        20.,
+        Vec3::new(-2., 2., 1.),
+        Vec3::new(0., 0., -1.),
+        Vec3::new(0., 1., 0.),
+    );
     camera.render(&world);
 }

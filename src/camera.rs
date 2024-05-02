@@ -6,6 +6,7 @@ use crate::color::*;
 use crate::hittable::*;
 use crate::interval::*;
 use crate::ray::*;
+use crate::utilities::degrees_to_radians;
 use crate::vec3::*;
 
 #[derive(Clone, Copy)]
@@ -19,6 +20,12 @@ pub struct Camera {
     pub pixel_delta_v: Vec3,
     pub samples_per_pixel: u32,
     pub max_depth: u32,
+    pub vertical_fov: f32,
+    pub look_from: Vec3,
+    pub look_to: Vec3,
+    // Up vector chosen prior to projection/normalization to form
+    // orthonormal camera coordinate system
+    pub vec_up: Vec3,
 }
 
 impl Camera {
@@ -27,9 +34,20 @@ impl Camera {
         image_width: u32,
         samples_per_pixel: u32,
         max_depth: u32,
+        vertical_fov: f32,
+        look_from: Vec3,
+        look_to: Vec3,
+        vec_up: Vec3,
     ) -> Self {
         let (image_height, camera_center, pixel00_location, pixel_delta_u, pixel_delta_v) =
-            Camera::initialize(aspect_ratio, image_width);
+            Camera::initialize(
+                aspect_ratio,
+                image_width,
+                vertical_fov,
+                look_from,
+                look_to,
+                vec_up,
+            );
         Self {
             aspect_ratio,
             image_width,
@@ -40,6 +58,10 @@ impl Camera {
             pixel_delta_v,
             samples_per_pixel,
             max_depth,
+            vertical_fov,
+            look_from,
+            look_to,
+            vec_up,
         }
     }
 
@@ -79,24 +101,41 @@ impl Camera {
         (1. - a) * Vec3::new(1., 1., 1.) + a * Vec3::new(0.5, 0.7, 1.)
     }
 
-    fn initialize(aspect_ratio: f32, image_width: u32) -> (u32, Vec3, Vec3, Vec3, Vec3) {
+    fn initialize(
+        aspect_ratio: f32,
+        image_width: u32,
+        vertical_fov: f32,
+        look_from: Vec3,
+        look_to: Vec3,
+        vec_up: Vec3,
+    ) -> (u32, Vec3, Vec3, Vec3, Vec3) {
         // Initialize camera characteristics
         let image_height: u32 = (image_width as f32 / aspect_ratio) as u32;
         let image_height = if image_height < 1 { 1 } else { image_height };
 
-        let focal_length = 1.0;
-        let viewport_height: f32 = 2.0;
+        let camera_center = look_from;
+        let focal_length = (look_to - look_from).length();
+        let viewport_height: f32 =
+            2.0 * (degrees_to_radians(vertical_fov) / 2.).tan() * focal_length;
         let viewport_width: f32 = viewport_height * (image_width as f32 / image_height as f32);
-        let camera_center = Vec3::ZERO;
 
-        let viewport_u = Vec3::new(viewport_width, 0., 0.);
-        let viewport_v = Vec3::new(0., -viewport_height, 0.);
+        // Define camera orthonormal coordinate system
+        let w = (look_from - look_to).unit();
+        let u = cross(vec_up, w).unit();
+        let v = cross(w, u);
 
+        // Calculate vectors across vertical and horizontal viewport edges of
+        // the camera
+        let viewport_u = viewport_width * u; // Horizontal edge vector
+        let viewport_v = -viewport_height * v; // Vertical edge vector
+
+        // Calculate the horizontal and vertical pixel-to-pixel vectors
         let pixel_delta_u = (1. / image_width as f32) * viewport_u;
         let pixel_delta_v = (1. / image_height as f32) * viewport_v;
 
+        // Calculate location of upper-left pixel in the image
         let viewport_upper_left =
-            camera_center - Vec3::new(0., 0., focal_length) - 0.5 * viewport_u - 0.5 * viewport_v;
+            camera_center - focal_length * w - 0.5 * viewport_u - 0.5 * viewport_v;
         let pixel00_location = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         (

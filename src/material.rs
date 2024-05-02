@@ -1,6 +1,7 @@
 use crate::{
     hittable::HitData,
     ray::Ray,
+    utilities::random_num,
     vec3::{dot, Vec3},
 };
 
@@ -55,7 +56,9 @@ impl Material {
                 let cos_theta = dot(-1. * norm_incoming_vec, hit_data.normal).min(1.);
                 let sin_theta = (1. - cos_theta * cos_theta).sqrt();
 
-                let direction = if adjusted_ref_ratio * sin_theta > 1. {
+                let direction = if (adjusted_ref_ratio * sin_theta > 1.
+                    || Dielectric::reflectance(cos_theta, adjusted_ref_ratio) > random_num())
+                {
                     Vec3::reflect(norm_incoming_vec, hit_data.normal)
                 } else {
                     Vec3::refract(ray_in.direction.unit(), hit_data.normal, adjusted_ref_ratio)
@@ -82,4 +85,12 @@ pub struct Metal {
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Dielectric {
     pub refractive_index: f32,
+}
+
+impl Dielectric {
+    // Schlick approximation for reflectance
+    pub fn reflectance(cosine: f32, ref_index: f32) -> f32 {
+        let r0 = (1. - ref_index) / (1. + ref_index);
+        r0 * r0 + (1. - r0 * r0) * (1. - cosine).powf(5.)
+    }
 }
