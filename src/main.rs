@@ -68,6 +68,8 @@ fn main() {
         Vec3::new(-2., 2., 1.),
         Vec3::new(0., 0., -1.),
         Vec3::new(0., 1., 0.),
+        10.,
+        3.4,
     );
     camera.render(&world);
 }

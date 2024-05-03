@@ -93,6 +93,15 @@ impl Vec3 {
         }
     }
 
+    pub fn random_in_unit_disc() -> Self {
+        loop {
+            let sample = Vec3::new(random_in_interval(-1., 1.), random_in_interval(-1., 1.), 0.);
+            if sample.length_squared() < 1. {
+                return sample;
+            }
+        }
+    }
+
     // Returns true in vec is close enough in magnitude to zero
     pub fn near_zero(&self) -> bool {
         let tolerance = 10.0_f32.powf(-8.);

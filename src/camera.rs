@@ -20,12 +20,18 @@ pub struct Camera {
     pub pixel_delta_v: Vec3,
     pub samples_per_pixel: u32,
     pub max_depth: u32,
+    // Parameters for positionable camera with variable field of view
     pub vertical_fov: f32,
     pub look_from: Vec3,
     pub look_to: Vec3,
     // Up vector chosen prior to projection/normalization to form
     // orthonormal camera coordinate system
     pub vec_up: Vec3,
+    // Parameters both supplied and derived for defocus blur
+    pub defocus_angle: f32,
+    pub focus_distance: f32,
+    pub defocus_disc_u: Vec3,
+    pub defocus_disc_v: Vec3,
 }
 
 impl Camera {
@@ -38,16 +44,27 @@ impl Camera {
         look_from: Vec3,
         look_to: Vec3,
         vec_up: Vec3,
+        defocus_angle: f32, // Full angle of cone with tip at focus point and base camera "lens"
+        focus_distance: f32, // Distance from camera "lens" center and focus plane
     ) -> Self {
-        let (image_height, camera_center, pixel00_location, pixel_delta_u, pixel_delta_v) =
-            Camera::initialize(
-                aspect_ratio,
-                image_width,
-                vertical_fov,
-                look_from,
-                look_to,
-                vec_up,
-            );
+        let (
+            image_height,
+            camera_center,
+            pixel00_location,
+            pixel_delta_u,
+            pixel_delta_v,
+            defocus_disc_u,
+            defocus_disc_v,
+        ) = Camera::initialize(
+            aspect_ratio,
+            image_width,
+            vertical_fov,
+            look_from,
+            look_to,
+            vec_up,
+            defocus_angle,
+            focus_distance,
+        );
         Self {
             aspect_ratio,
             image_width,
@@ -62,6 +79,10 @@ impl Camera {
             look_from,
             look_to,
             vec_up,
+            defocus_angle,
+            focus_distance,
+            defocus_disc_u,
+            defocus_disc_v,
         }
     }
 
@@ -69,15 +90,26 @@ impl Camera {
         Vec3::new(random::<f32>() - 0.5, random::<f32>() - 0.5, 0.)
     }
 
+    fn defocus_disc_sample(&self) -> Vec3 {
+        // Returns random point inside camera defocus disc
+        let point = Vec3::random_in_unit_disc();
+        self.camera_center + point.x * self.defocus_disc_u + point.y * self.defocus_disc_v
+    }
+
     fn get_ray(&self, i: u32, j: u32) -> Ray {
-        // Construct a ray starting from the camera and pointing to a randomly
+        // Construct a ray starting from the camera defocus disc and pointing to a randomly
         // sampled location in the i,j pixel
         let offset = Self::sample_square();
         let pixel_sample = self.pixel00_location
             + (i as f32 + offset.x) * self.pixel_delta_u
             + (j as f32 + offset.y) * self.pixel_delta_v;
 
-        Ray::new(self.camera_center, pixel_sample - self.camera_center)
+        let ray_origin = if self.defocus_angle <= 0. {
+            self.camera_center
+        } else {
+            self.defocus_disc_sample()
+        };
+        Ray::new(ray_origin, pixel_sample - ray_origin)
     }
 
     fn ray_color(ray: Ray, depth: u32, world: &HittableList) -> Vec3 {
@@ -108,15 +140,16 @@ impl Camera {
         look_from: Vec3,
         look_to: Vec3,
         vec_up: Vec3,
-    ) -> (u32, Vec3, Vec3, Vec3, Vec3) {
+        defocus_angle: f32,
+        focus_distance: f32,
+    ) -> (u32, Vec3, Vec3, Vec3, Vec3, Vec3, Vec3) {
         // Initialize camera characteristics
         let image_height: u32 = (image_width as f32 / aspect_ratio) as u32;
         let image_height = if image_height < 1 { 1 } else { image_height };
 
         let camera_center = look_from;
-        let focal_length = (look_to - look_from).length();
         let viewport_height: f32 =
-            2.0 * (degrees_to_radians(vertical_fov) / 2.).tan() * focal_length;
+            2.0 * (degrees_to_radians(vertical_fov) / 2.).tan() * focus_distance;
         let viewport_width: f32 = viewport_height * (image_width as f32 / image_height as f32);
 
         // Define camera orthonormal coordinate system
@@ -135,8 +168,13 @@ impl Camera {
 
         // Calculate location of upper-left pixel in the image
         let viewport_upper_left =
-            camera_center - focal_length * w - 0.5 * viewport_u - 0.5 * viewport_v;
+            camera_center - focus_distance * w - 0.5 * viewport_u - 0.5 * viewport_v;
         let pixel00_location = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        // Calculate camera defocus disc vectors
+        let defocus_radius = focus_distance * (degrees_to_radians(defocus_angle / 2.)).tan();
+        let defocus_disc_u = defocus_radius * u;
+        let defocus_disc_v = defocus_radius * v;
 
         (
             image_height,
@@ -144,6 +182,8 @@ impl Camera {
             pixel00_location,
             pixel_delta_u,
             pixel_delta_v,
+            defocus_disc_u,
+            defocus_disc_v,
         )
     }
 
