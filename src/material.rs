@@ -1,9 +1,4 @@
-use crate::{
-    hittable::HitData,
-    ray::Ray,
-    utilities::random_num,
-    vec3::{dot, Vec3},
-};
+use crate::{hittable::HitData, ray::Ray, utilities::random_num, vec3::Vec3};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Material {
@@ -43,7 +38,7 @@ impl Material {
                     + metal.fuzz * Vec3::random_unit_vector();
                 *scattered = Ray::new(hit_data.point, reflected);
                 *attenuation = metal.albedo;
-                dot(scattered.direction, hit_data.normal) > 0.
+                Vec3::dot(scattered.direction, hit_data.normal) > 0.
             }
             Self::Dielectric(dielectric) => {
                 let adjusted_ref_ratio = if hit_data.front_face {
@@ -53,11 +48,11 @@ impl Material {
                 };
 
                 let norm_incoming_vec = ray_in.direction.unit();
-                let cos_theta = dot(-1. * norm_incoming_vec, hit_data.normal).min(1.);
+                let cos_theta = Vec3::dot(-1. * norm_incoming_vec, hit_data.normal).min(1.);
                 let sin_theta = (1. - cos_theta * cos_theta).sqrt();
 
-                let direction = if (adjusted_ref_ratio * sin_theta > 1.
-                    || Dielectric::reflectance(cos_theta, adjusted_ref_ratio) > random_num())
+                let direction = if adjusted_ref_ratio * sin_theta > 1.
+                    || Dielectric::reflectance(cos_theta, adjusted_ref_ratio) > random_num()
                 {
                     Vec3::reflect(norm_incoming_vec, hit_data.normal)
                 } else {

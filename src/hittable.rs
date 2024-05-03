@@ -25,7 +25,7 @@ impl Default for HitData {
 
 impl HitData {
     pub fn set_face_normal(&mut self, ray: Ray, outward_normal: Vec3) {
-        self.front_face = dot(ray.direction, outward_normal) < 0.;
+        self.front_face = Vec3::dot(ray.direction, outward_normal) < 0.;
         self.normal = if self.front_face {
             outward_normal
         } else {
@@ -47,7 +47,7 @@ impl HittableList {
     }
 
     pub fn clear(&mut self) {
-        self.clear()
+        self.0.clear()
     }
 
     pub fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
@@ -95,7 +95,7 @@ impl Hittable for Sphere {
         // Quadratic constants for solving the ray intersection equation
         let a = ray.direction.length_squared();
         // Use scaled parameter for symplicity h = b / -2
-        let h = dot(ray.direction, origin_gap);
+        let h = Vec3::dot(ray.direction, origin_gap);
         let c = origin_gap.length_squared() - self.radius * self.radius;
         let discriminant = h * h - a * c;
 

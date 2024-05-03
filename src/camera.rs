@@ -121,8 +121,8 @@ impl Camera {
 
         // Define camera orthonormal coordinate system
         let w = (look_from - look_to).unit();
-        let u = cross(vec_up, w).unit();
-        let v = cross(w, u);
+        let u = Vec3::cross(vec_up, w).unit();
+        let v = Vec3::cross(w, u);
 
         // Calculate vectors across vertical and horizontal viewport edges of
         // the camera

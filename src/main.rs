@@ -1,6 +1,4 @@
 mod camera;
-use std::f32::consts::PI;
-
 use camera::Camera;
 mod color;
 mod hittable;
