@@ -74,24 +74,34 @@ impl HittableList {
 }
 
 pub struct Sphere {
-    pub center: Vec3,
+    pub center_0: Vec3,
+    pub center_1: Vec3,
     pub radius: f32,
     pub material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
+    pub fn new(center_0: Vec3, center_1: Vec3, radius: f32, material: Material) -> Self {
         Self {
-            center,
+            center_0,
+            center_1,
             radius,
             material,
         }
     }
 }
 
+impl Sphere {
+    pub fn sphere_center(&self, time: f32) -> Vec3 {
+        let center_vec = self.center_1 - self.center_0;
+        self.center_0 + time * center_vec
+    }
+}
+
 impl Hittable for Sphere {
     fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
-        let origin_gap = self.center - ray.origin;
+        let center = self.sphere_center(ray.time);
+        let origin_gap = center - ray.origin;
         // Quadratic constants for solving the ray intersection equation
         let a = ray.direction.length_squared();
         // Use scaled parameter for symplicity h = b / -2
@@ -113,7 +123,7 @@ impl Hittable for Sphere {
 
         hit_data.hit_along_ray = ray_hit;
         hit_data.point = ray.at(ray_hit);
-        let outward_normal = (1. / self.radius) * (hit_data.point - self.center);
+        let outward_normal = (1. / self.radius) * (hit_data.point - center);
         hit_data.set_face_normal(ray, outward_normal);
         hit_data.material = Some(self.material);
 

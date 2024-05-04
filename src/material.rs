@@ -29,14 +29,14 @@ impl Material {
                 if scatter_direction.near_zero() {
                     scatter_direction = hit_data.normal;
                 };
-                *scattered = Ray::new(hit_data.point, scatter_direction);
+                *scattered = Ray::new(hit_data.point, scatter_direction, ray_in.time);
                 *attenuation = lamb.albedo;
                 true
             }
             Self::Metal(metal) => {
                 let reflected = Vec3::reflect(ray_in.direction, hit_data.normal).unit()
                     + metal.fuzz * Vec3::random_unit_vector();
-                *scattered = Ray::new(hit_data.point, reflected);
+                *scattered = Ray::new(hit_data.point, reflected, ray_in.time);
                 *attenuation = metal.albedo;
                 Vec3::dot(scattered.direction, hit_data.normal) > 0.
             }
@@ -59,7 +59,7 @@ impl Material {
                     Vec3::refract(ray_in.direction.unit(), hit_data.normal, adjusted_ref_ratio)
                 };
                 *attenuation = Vec3::new(1., 1., 1.);
-                *scattered = Ray::new(hit_data.point, direction);
+                *scattered = Ray::new(hit_data.point, direction, ray_in.time);
                 true
             }
         }

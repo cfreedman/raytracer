@@ -1,4 +1,3 @@
-use rand::prelude::random;
 use std::fs::File;
 use std::io::Write;
 
@@ -6,7 +5,7 @@ use crate::color::*;
 use crate::hittable::*;
 use crate::interval::*;
 use crate::ray::*;
-use crate::utilities::degrees_to_radians;
+use crate::utilities::{degrees_to_radians, random_num};
 use crate::vec3::*;
 
 #[derive(Clone, Copy)]
@@ -87,7 +86,7 @@ impl Camera {
     }
 
     fn sample_square() -> Vec3 {
-        Vec3::new(random::<f32>() - 0.5, random::<f32>() - 0.5, 0.)
+        Vec3::new(random_num() - 0.5, random_num() - 0.5, 0.)
     }
 
     fn defocus_disc_sample(&self) -> Vec3 {
@@ -109,7 +108,7 @@ impl Camera {
         } else {
             self.defocus_disc_sample()
         };
-        Ray::new(ray_origin, pixel_sample - ray_origin)
+        Ray::new(ray_origin, pixel_sample - ray_origin, random_num())
     }
 
     fn ray_color(ray: Ray, depth: u32, world: &HittableList) -> Vec3 {
