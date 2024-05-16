@@ -18,6 +18,13 @@ impl Interval {
         Self { min, max }
     }
 
+    pub fn new_from_intervals(a: Self, b: Self) -> Self {
+        let min = if a.min <= b.min { a.min } else { b.min };
+        let max = if a.max <= b.max { b.max } else { a.max };
+
+        Self::new(min, max)
+    }
+
     pub fn size(&self) -> f32 {
         self.max - self.min
     }
@@ -38,6 +45,10 @@ impl Interval {
             return self.max;
         };
         x
+    }
+
+    pub fn expands(&self, delta: f32) -> Self {
+        Self::new(self.min - delta / 2., self.max + delta / 2.)
     }
 
     pub const EMPTY: Self = Self {

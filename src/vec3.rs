@@ -1,5 +1,10 @@
 use std::ops::{Add, AddAssign, Mul, Sub};
 
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
+
 use crate::utilities::{random_in_interval, random_num};
 
 // Defining Vec3 class
@@ -8,6 +13,28 @@ pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Dim {
+    X,
+    Y,
+    Z,
+}
+
+impl Dim {
+    pub const ALL: [Dim; 3] = [Self::X, Self::Y, Self::Z];
+}
+
+impl Distribution<Dim> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Dim {
+        match rng.gen_range(0..=2) {
+            0 => Dim::X,
+            1 => Dim::Y,
+            2 => Dim::Z,
+            _ => Dim::X,
+        }
+    }
 }
 
 impl Vec3 {
@@ -19,6 +46,14 @@ impl Vec3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn get(&self, dim: Dim) -> f32 {
+        match dim {
+            Dim::X => self.x,
+            Dim::Y => self.y,
+            Dim::Z => self.z,
+        }
     }
 
     pub fn minus(&mut self) {

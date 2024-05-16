@@ -1,3 +1,4 @@
+use crate::aabb::Aabb;
 use crate::interval::*;
 use crate::material::Material;
 use crate::ray::*;
@@ -36,25 +37,32 @@ impl HitData {
 
 pub trait Hittable {
     fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool;
+
+    fn bounding_box(&self) -> Aabb;
 }
 
 #[derive(Default)]
-pub struct HittableList(Vec<Box<dyn Hittable>>);
+pub struct HittableList {
+    objects: Vec<Box<dyn Hittable>>,
+    bbox: Aabb,
+}
 
 impl HittableList {
     pub fn add(&mut self, object: Box<dyn Hittable>) {
-        self.0.push(object)
+        self.bbox = Aabb::new_from_boxes(self.bbox, object.bounding_box());
+        self.objects.push(object);
     }
 
     pub fn clear(&mut self) {
-        self.0.clear()
+        self.objects.clear();
+        self.bbox = Aabb::default();
     }
 
     pub fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
         let mut hit_anything = false;
         let mut closest_hit = interval.max;
 
-        for object in self.0.iter() {
+        for object in self.objects.iter() {
             // Define temp_hit_data in each loop iteration to avoid its moving
             // across loop counts
             let mut temp_hit_data = HitData::default();
@@ -78,20 +86,25 @@ pub struct Sphere {
     pub center_1: Vec3,
     pub radius: f32,
     pub material: Material,
+    pub bbox: Aabb,
 }
 
 impl Sphere {
     pub fn new(center_0: Vec3, center_1: Vec3, radius: f32, material: Material) -> Self {
+        let rvec = Vec3::new(radius, radius, radius);
+        let bbox_0 = Aabb::new_from_points(center_0 - rvec, center_0 + rvec);
+        let bbox_1 = Aabb::new_from_points(center_1 - rvec, center_1 + rvec);
+        let bbox = Aabb::new_from_boxes(bbox_0, bbox_1);
+
         Self {
             center_0,
             center_1,
             radius,
             material,
+            bbox,
         }
     }
-}
 
-impl Sphere {
     pub fn sphere_center(&self, time: f32) -> Vec3 {
         let center_vec = self.center_1 - self.center_0;
         self.center_0 + time * center_vec
@@ -128,5 +141,9 @@ impl Hittable for Sphere {
         hit_data.material = Some(self.material);
 
         true
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        self.bbox
     }
 }
