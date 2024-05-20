@@ -1,6 +1,12 @@
-use crate::{hittable::HitData, ray::Ray, utilities::random_num, vec3::Vec3};
+use crate::{
+    hittable::HitData,
+    ray::Ray,
+    texture::{SolidTexture, Texture},
+    utilities::random_num,
+    vec3::Vec3,
+};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone)]
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
@@ -30,7 +36,7 @@ impl Material {
                     scatter_direction = hit_data.normal;
                 };
                 *scattered = Ray::new(hit_data.point, scatter_direction, ray_in.time);
-                *attenuation = lamb.albedo;
+                *attenuation = lamb.texture.value(hit_data.u, hit_data.v, hit_data.point);
                 true
             }
             Self::Metal(metal) => {
@@ -66,9 +72,19 @@ impl Material {
     }
 }
 
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Clone, Default)]
 pub struct Lambertian {
-    pub albedo: Vec3,
+    pub texture: Texture,
+}
+
+impl Lambertian {
+    pub fn new(texture: Texture) -> Self {
+        Self { texture }
+    }
+
+    pub fn new_from_color(color: Vec3) -> Self {
+        Self::new(Texture::Solid(SolidTexture::new(color)))
+    }
 }
 
 #[derive(Copy, Clone, Default, Debug)]

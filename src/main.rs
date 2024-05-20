@@ -8,7 +8,9 @@ use hittable::{HittableList, Sphere};
 mod interval;
 mod material;
 mod ray;
+mod texture;
 mod utilities;
+use texture::{CheckerTexture, Texture};
 use utilities::{random_in_interval, random_num};
 mod vec3;
 use material::{Dielectric, Lambertian, Material, Metal};
@@ -18,9 +20,10 @@ fn main() {
     // World
     let mut world = HittableList::default();
 
-    let material_ground = Material::Lambertian(Lambertian {
-        albedo: Vec3::new(0.5, 0.5, 0.5),
-    });
+    let checker_texture =
+        CheckerTexture::new_from_colors(0.32, Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9));
+
+    let material_ground = Material::Lambertian(Lambertian::new(Texture::Checker(checker_texture)));
     let ground_center = Vec3::new(0., -1000., 0.);
     world.add(Box::new(Sphere::new(
         ground_center,
@@ -42,7 +45,7 @@ fn main() {
                 if sample_material < 0.8 {
                     // Diffuse sphere spawns
                     let albedo = Vec3::random() * Vec3::random();
-                    let sphere_material = Material::Lambertian(Lambertian { albedo });
+                    let sphere_material = Material::Lambertian(Lambertian::new_from_color(albedo));
                     let center_end = center + Vec3::new(0., random_in_interval(0., 0.5), 0.);
                     world.add(Box::new(Sphere::new(
                         center,
@@ -73,9 +76,7 @@ fn main() {
     let center_0 = Vec3::new(0., 1., 0.);
     world.add(Box::new(Sphere::new(center_0, center_0, 1., material_0)));
 
-    let material_1 = Material::Lambertian(Lambertian {
-        albedo: Vec3::new(0.4, 0.2, 0.1),
-    });
+    let material_1 = Material::Lambertian(Lambertian::new_from_color(Vec3::new(0.4, 0.2, 0.1)));
     let center_1 = Vec3::new(-4., 1., 0.);
     world.add(Box::new(Sphere::new(center_1, center_1, 1., material_1)));
 

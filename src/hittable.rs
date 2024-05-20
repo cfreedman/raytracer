@@ -10,6 +10,8 @@ pub struct HitData {
     pub normal: Vec3,
     pub front_face: bool,
     pub material: Option<Material>,
+    pub u: f32,
+    pub v: f32,
 }
 
 impl Default for HitData {
@@ -20,6 +22,8 @@ impl Default for HitData {
             normal: Vec3::default(),
             front_face: false,
             material: None,
+            u: 0.,
+            v: 0.,
         }
     }
 }
