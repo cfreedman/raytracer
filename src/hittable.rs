@@ -4,6 +4,7 @@ use crate::material::Material;
 use crate::ray::*;
 use crate::vec3::*;
 
+#[derive(Clone)]
 pub struct HitData {
     pub hit_along_ray: f32,
     pub point: Vec3,
@@ -142,7 +143,7 @@ impl Hittable for Sphere {
         hit_data.point = ray.at(ray_hit);
         let outward_normal = (1. / self.radius) * (hit_data.point - center);
         hit_data.set_face_normal(ray, outward_normal);
-        hit_data.material = Some(self.material);
+        hit_data.material = Some(self.material.clone());
 
         true
     }

@@ -119,8 +119,8 @@ impl Camera {
         if world.hit(ray, Interval::new(0.001, f32::INFINITY), &mut hit_data) {
             let mut attenuation = Vec3::default();
             let mut scattered = Ray::default();
-            if let Some(material) = hit_data.material {
-                if material.scatter(ray, hit_data, &mut attenuation, &mut scattered) {
+            if let Some(material) = hit_data.clone().material {
+                if material.scatter(ray, &mut hit_data, &mut attenuation, &mut scattered) {
                     return attenuation * Self::ray_color(scattered, depth - 1, world);
                 }
             }
