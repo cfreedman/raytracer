@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::aabb::Aabb;
 use crate::interval::*;
 use crate::material::Material;
@@ -48,8 +50,8 @@ pub trait Hittable {
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>,
-    bbox: Aabb,
+    pub objects: Vec<Box<dyn Hittable>>,
+    pub bbox: Aabb,
 }
 
 impl HittableList {
@@ -114,6 +116,16 @@ impl Sphere {
         let center_vec = self.center_1 - self.center_0;
         self.center_0 + time * center_vec
     }
+
+    fn get_uv(point: Vec3) -> (f32, f32) {
+        let theta = (-point.y).acos();
+        let phi = (-point.z).atan2(point.x) + PI;
+
+        let u = phi / 2. * PI;
+        let v = theta / PI;
+
+        (u,v)
+    }
 }
 
 impl Hittable for Sphere {
@@ -143,6 +155,7 @@ impl Hittable for Sphere {
         hit_data.point = ray.at(ray_hit);
         let outward_normal = (1. / self.radius) * (hit_data.point - center);
         hit_data.set_face_normal(ray, outward_normal);
+        (hit_data.u, hit_data.v) = Self::get_uv(outward_normal);
         hit_data.material = Some(self.material.clone());
 
         true

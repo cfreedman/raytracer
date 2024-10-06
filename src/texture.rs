@@ -72,3 +72,7 @@ impl CheckerTexture {
         }
     }
 }
+
+pub struct ImageTexture {
+    filename: String,
+}

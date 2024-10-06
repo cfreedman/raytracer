@@ -1,20 +1,10 @@
-mod aabb;
-mod bvh;
-mod camera;
-use camera::Camera;
-mod color;
-mod hittable;
-use hittable::{HittableList, Sphere};
-mod interval;
-mod material;
-mod ray;
-mod texture;
-mod utilities;
-use texture::{CheckerTexture, Texture};
-use utilities::{random_in_interval, random_num};
-mod vec3;
-use material::{Dielectric, Lambertian, Material, Metal};
-use vec3::*;
+use raytracer::bvh::Bvh;
+use raytracer::camera::Camera;
+use raytracer::hittable::{HittableList, Sphere};
+use raytracer::material::{Dielectric, Lambertian, Material, Metal};
+use raytracer::texture::{CheckerTexture, Texture};
+use raytracer::utilities::{random_in_interval, random_num};
+use raytracer::vec3::Vec3;
 
 fn main() {
     // World
@@ -87,6 +77,12 @@ fn main() {
     let center_2 = Vec3::new(4., 1., 0.);
     world.add(Box::new(Sphere::new(center_2, center_2, 1., material_2)));
 
+    let root_node = Bvh::new(world.objects);
+    let bbox = root_node.bbox;
+    world = HittableList {
+        objects: vec![Box::new(root_node)],
+        bbox,
+    };
     // Camera
     let camera = Camera::new(
         16. / 9.,

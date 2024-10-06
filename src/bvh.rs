@@ -4,50 +4,46 @@ use crate::aabb::Aabb;
 use crate::hittable::{HitData, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
-use crate::Dim;
+use crate::vec3::Dim;
 
-pub struct Bvh<'a> {
-    pub left: &'a Box<dyn Hittable>,
-    pub right: &'a Box<dyn Hittable>,
+pub struct Bvh {
+    pub left: Box<dyn Hittable>,
+    pub right: Option<Box<dyn Hittable>>,
     pub bbox: Aabb,
 }
 
-impl<'b> Bvh<'b> {
-    // make sure start, end < len(objects) - 1 and start < end
-    pub fn new(mut objects: Vec<&'b Box<dyn Hittable>>) -> Self {
+impl Bvh {
+    pub fn new(mut objects: Vec<Box<dyn Hittable>>) -> Self {
         // Build bounding box for span of objects included in this BVH node
-        let mut bbox = Aabb::empty();
-        for &object in objects.iter() {
-            bbox = Aabb::new_from_boxes(bbox, object.bounding_box())
-        }
+        let bbox = objects.iter().fold(Aabb::empty(), |acc, object| Aabb::new_from_boxes(acc, object.bounding_box()));
 
         let longest_axis = bbox.longest_axis();
 
         match objects.len() {
             1 => Self {
-                left: objects[0],
-                right: objects[0],
+                left: objects.remove(0),
+                right: None,
                 bbox,
             },
             2 => Self {
-                left: objects[0],
-                right: objects[1],
+                left: objects.remove(0),
+                right: Some(objects.remove(0)),
                 bbox,
             },
             _ => {
-                objects.sort_by(move |&a, &b| -> Ordering {
-                    match Self::box_compare(a, b, longest_axis) {
+                objects.sort_by(move |a, b| -> Ordering {
+                    match Self::box_compare(&a, &b, longest_axis) {
                         true => Ordering::Less,
                         false => Ordering::Greater,
                     }
                 });
 
                 let mid = objects.len() / 2;
-                let left_objects = objects[..mid].to_vec();
-                let right_objects = objects[mid..].to_vec();
+                let left_objects = objects.split_off(mid);
+                let right_objects = objects;
                 Self {
-                    left: &(Box::new(Self::new(left_objects)) as Box<dyn Hittable>),
-                    right: &(Box::new(Self::new(right_objects.clone())) as Box<dyn Hittable>),
+                    left: Box::new(Self::new(left_objects)),
+                    right: Some(Box::new(Self::new(right_objects))),
                     bbox,
                 }
             }
@@ -63,14 +59,17 @@ impl<'b> Bvh<'b> {
     }
 }
 
-impl<'a> Hittable for Bvh<'a> {
+impl Hittable for Bvh {
     fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
         if !self.bbox.hit(ray, interval) {
             return false;
         }
 
         let left_hit = self.left.hit(ray, interval, hit_data);
-        let right_hit = self.right.hit(ray, interval, hit_data);
+        let right_hit = match &self.right {
+            Some(obj) => obj.hit(ray, interval, hit_data),
+            None => false
+        };
 
         left_hit || right_hit
     }
