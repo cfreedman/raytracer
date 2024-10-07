@@ -1,9 +1,14 @@
-use crate::vec3::Vec3;
+use std::path::Path;
+
+use image::{ImageError, ImageReader, RgbImage};
+
+use crate::{interval::Interval, vec3::Vec3};
 
 #[derive(Clone)]
 pub enum Texture {
     Solid(SolidTexture),
     Checker(CheckerTexture),
+    Image(ImageTexture),
 }
 
 impl Default for Texture {
@@ -17,6 +22,7 @@ impl Texture {
         match self {
             Self::Solid(solid_texture) => solid_texture.value(u, v, point),
             Self::Checker(checker_texture) => checker_texture.value(u, v, point),
+            Self::Image(image_texture) => image_texture.value(u, v, point),
         }
     }
 }
@@ -73,6 +79,34 @@ impl CheckerTexture {
     }
 }
 
+#[derive(Clone)]
 pub struct ImageTexture {
-    filename: String,
+    image: RgbImage,
+}
+    
+impl ImageTexture {
+    pub fn new(file: String) -> Result<ImageTexture, ImageError> {
+        let image = ImageReader::open(Path::new(&file))?.decode()?.into_rgb8();
+        
+        Ok(Self {
+            image
+        })
+
+    }
+
+    pub fn value(&self, mut u: f32, mut v: f32, _point: Vec3) -> Vec3 {
+        if self.image.height() <= 0 {
+            return Vec3::new(0., 1., 1.)
+        }
+
+        u = Interval::new(0.,1.).clamp(u);
+        v = 1.0 - Interval::new(0.,1.).clamp(v);
+
+        let i = (u as u32) * (self.image.width() - 1);
+        let j = (v as u32)  * (self.image.height() - 1);
+        let pixel = self.image.get_pixel(i,j);
+
+        let color_scale = 1. / 255. as f32;
+        color_scale * Vec3::new(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32)
+    }
 }

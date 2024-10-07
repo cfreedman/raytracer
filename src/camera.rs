@@ -204,6 +204,8 @@ impl Camera {
                     let _ = file.write_all(&write_color(
                         (1. / self.samples_per_pixel as f32) * pixel_color,
                     ));
+
+                    eprintln!("Write pixel ({i},{j}) successfully")
                 }
             }
         }
