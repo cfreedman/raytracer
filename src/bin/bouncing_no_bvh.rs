@@ -1,4 +1,3 @@
-use raytracer::bvh::Bvh;
 use raytracer::camera::Camera;
 use raytracer::hittable::{HittableList, Sphere};
 use raytracer::material::{Dielectric, Lambertian, Material, Metal};
@@ -77,18 +76,12 @@ fn main() {
     let center_2 = Vec3::new(4., 1., 0.);
     world.add(Box::new(Sphere::new(center_2, center_2, 1., material_2)));
 
-    let root_node = Bvh::new(world.objects);
-    let bbox = root_node.bbox;
-    world = HittableList {
-        objects: vec![Box::new(root_node)],
-        bbox,
-    };
     // Camera
     let camera = Camera::new(
         16. / 9.,
         400,
         100,
-        5,
+        50,
         20.,
         Vec3::new(13., 2., 3.),
         Vec3::new(0., 0., 0.),

@@ -2,13 +2,14 @@ use std::path::Path;
 
 use image::{ImageError, ImageReader, RgbImage};
 
-use crate::{interval::Interval, vec3::Vec3};
+use crate::{interval::Interval, perlin::Perlin, vec3::Vec3};
 
 #[derive(Clone)]
 pub enum Texture {
     Solid(SolidTexture),
     Checker(CheckerTexture),
     Image(ImageTexture),
+    Perlin(PerlinTexture),
 }
 
 impl Default for Texture {
@@ -23,6 +24,7 @@ impl Texture {
             Self::Solid(solid_texture) => solid_texture.value(u, v, point),
             Self::Checker(checker_texture) => checker_texture.value(u, v, point),
             Self::Image(image_texture) => image_texture.value(u, v, point),
+            Self::Perlin(perline_texture) => perline_texture.value(u, v, point),
         }
     }
 }
@@ -108,5 +110,25 @@ impl ImageTexture {
 
         let color_scale = 1. / 255. as f32;
         color_scale * Vec3::new(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32)
+    }
+}
+
+
+#[derive(Clone)]
+pub struct PerlinTexture {
+    noise: Perlin,
+    scale: f32,
+}
+
+impl PerlinTexture {
+    pub fn new(scale: f32) -> PerlinTexture {
+        Self {
+            noise: Perlin::new(),
+            scale
+        }
+    }
+    
+    pub fn value(&self, mut _u: f32, mut _v: f32, point: Vec3) -> Vec3 {
+        (1. + f32::sin(self.scale*point.z + 10.*self.noise.turbulence(point, 7))) * Vec3::new(0.5,0.5,0.5)
     }
 }
