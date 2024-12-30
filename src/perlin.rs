@@ -52,15 +52,15 @@ impl Perlin {
         let v = point.y - point.y.floor();
         let w = point.z - point.z.floor();
 
-        let i = point.x.floor().abs() as usize;
-        let j = point.y.floor().abs() as usize;
-        let k = point.z.floor().abs() as usize;
+        let i = point.x.floor() as isize;
+        let j = point.y.floor() as isize;
+        let k = point.z.floor() as isize;
 
         let mut c = [[[Vec3::ZERO; 2]; 2]; 2];
 
         for indices in (0..3).map(|_i| 0..2).multi_cartesian_product() {
             let (di, dj, dk) = (indices[0], indices[1], indices[2]);
-            c[di][dj][dk] = self.random_vectors[self.permutation_x[(i + di) & 255]^self.permutation_y[(j + dj) & 255]^self.permutation_z[(k + dk) & 255]]
+            c[di][dj][dk] = self.random_vectors[self.permutation_x[((i + di as isize) & 255) as usize]^self.permutation_y[((j + dj as isize) & 255) as usize]^self.permutation_z[((k + dk as isize) & 255) as usize]]
         }
 
         let res = Self::perlin_interpolate(c, u, v, w);

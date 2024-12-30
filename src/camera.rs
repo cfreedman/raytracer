@@ -1,3 +1,4 @@
+use core::f32;
 use std::fs::File;
 use std::io::Write;
 
@@ -31,6 +32,7 @@ pub struct Camera {
     pub focus_distance: f32,
     pub defocus_disc_u: Vec3,
     pub defocus_disc_v: Vec3,
+    pub background: Option<Vec3>, // Color for background
 }
 
 impl Camera {
@@ -45,6 +47,7 @@ impl Camera {
         vec_up: Vec3,
         defocus_angle: f32, // Full angle of cone with tip at focus point and base camera "lens"
         focus_distance: f32, // Distance from camera "lens" center and focus plane
+        background: Option<Vec3>,
     ) -> Self {
         let (
             image_height,
@@ -82,6 +85,7 @@ impl Camera {
             focus_distance,
             defocus_disc_u,
             defocus_disc_v,
+            background,
         }
     }
 
@@ -111,25 +115,35 @@ impl Camera {
         Ray::new(ray_origin, pixel_sample - ray_origin, random_num())
     }
 
-    fn ray_color(ray: Ray, depth: u32, world: &HittableList) -> Vec3 {
+    fn ray_color(&self, ray: Ray, depth: u32, world: &HittableList) -> Vec3 {
         if depth <= 0 {
-            return Vec3::new(0., 0., 0.);
-        }
-        let mut hit_data = HitData::default();
-        if world.hit(ray, Interval::new(0.001, f32::INFINITY), &mut hit_data) {
-            let mut attenuation = Vec3::default();
-            let mut scattered = Ray::default();
-            if let Some(material) = hit_data.clone().material {
-                if material.scatter(ray, &mut hit_data, &mut attenuation, &mut scattered) {
-                    return attenuation * Self::ray_color(scattered, depth - 1, world);
-                }
-            }
-            return Vec3::new(0., 0., 0.);
+            return Vec3::new(0.,0.,0.);
         }
 
-        let unit_direction = ray.direction.unit();
-        let a = 0.5 * (unit_direction.y + 1.);
-        (1. - a) * Vec3::new(1., 1., 1.) + a * Vec3::new(0.5, 0.7, 1.)
+        let mut hit_data = HitData::default();
+
+        if !world.hit(ray, Interval::new(0.001, f32::INFINITY), &mut hit_data) {
+            return if self.background.is_some() {
+                self.background.unwrap()
+            } else {
+                let unit_direction = ray.direction.unit();
+                let a = 0.5 * (unit_direction.y + 1.);
+                (1. - a) * Vec3::new(1., 1., 1.) + a * Vec3::new(0.5, 0.7, 1.)
+            }
+        }
+
+        let mut attenuation = Vec3::default();
+        let mut scattered = Ray::default();
+        if let Some(material) = hit_data.clone().material {
+            let emitted_color = material.emit(hit_data.point, hit_data.u, hit_data.v);
+            if material.scatter(ray, &mut hit_data, &mut attenuation, &mut scattered) {
+                return emitted_color + attenuation * self.ray_color(scattered, depth - 1, world);
+            }
+
+            return emitted_color;
+        }
+            
+        Vec3::new(0.,0.,0.)
     }
 
     fn initialize(
@@ -198,7 +212,7 @@ impl Camera {
                     let mut pixel_color = Vec3::new(0., 0., 0.);
                     for _sample in 0..self.samples_per_pixel {
                         let ray = self.get_ray(i, j);
-                        pixel_color += Self::ray_color(ray, self.max_depth, world)
+                        pixel_color += self.ray_color(ray, self.max_depth, world)
                     }
 
                     let _ = file.write_all(&write_color(

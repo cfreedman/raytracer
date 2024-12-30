@@ -59,4 +59,9 @@ impl Interval {
         min: -f32::INFINITY,
         max: f32::INFINITY,
     };
+
+    pub const UNIT: Self = Self {
+        min: 0.,
+        max: 1.,
+    };
 }

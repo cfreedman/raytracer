@@ -108,7 +108,7 @@ impl ImageTexture {
         let j = (v as u32)  * (self.image.height() - 1);
         let pixel = self.image.get_pixel(i,j);
 
-        let color_scale = 1. / 255. as f32;
+        let color_scale = 1. / 255.;
         color_scale * Vec3::new(pixel[0] as f32, pixel[1] as f32, pixel[2] as f32)
     }
 }

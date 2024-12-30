@@ -11,6 +11,7 @@ pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
     Dielectric(Dielectric),
+    DiffuseLight(DiffuseLight),
 }
 
 impl Default for Material {
@@ -33,6 +34,16 @@ impl Material {
             Self::Dielectric(dielectric) => {
                 dielectric.scatter(ray_in, hit_data, attenuation, scattered)
             }
+            Self::DiffuseLight(_) => false,
+        }
+    }
+
+    pub fn emit(&self, point: Vec3, u: f32, v: f32) -> Vec3 {
+        match self {
+            Self::Lambertian(lamb) => lamb.emit(point, u, v),
+            Self::Metal(metal) => metal.emit(point, u, v),
+            Self::Dielectric(dielectric) => dielectric.emit(point, u, v),
+            Self::DiffuseLight(light) => light.emit(point, u, v),
         }
     }
 }
@@ -68,6 +79,10 @@ impl Lambertian {
         *attenuation = self.texture.value(hit_data.u, hit_data.v, hit_data.point);
         true
     }
+
+    pub fn emit(&self, _point: Vec3, _u: f32, _v: f32) -> Vec3 {
+        Vec3::ZERO
+    }
 }
 
 #[derive(Copy, Clone, Default, Debug)]
@@ -89,6 +104,10 @@ impl Metal {
         *scattered = Ray::new(hit_data.point, reflected, ray_in.time);
         *attenuation = self.albedo;
         Vec3::dot(scattered.direction, hit_data.normal) > 0.
+    }
+
+    pub fn emit(&self, _point: Vec3, _u: f32, _v: f32) -> Vec3 {
+        Vec3::ZERO
     }
 }
 
@@ -131,5 +150,26 @@ impl Dielectric {
         *attenuation = Vec3::new(1., 1., 1.);
         *scattered = Ray::new(hit_data.point, direction, ray_in.time);
         true
+    }
+
+    pub fn emit(&self, _point: Vec3, _u: f32, _v: f32) -> Vec3 {
+        Vec3::ZERO
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct DiffuseLight {
+    texture: Texture,
+}
+
+impl DiffuseLight {
+    pub fn new(texture: Texture) -> DiffuseLight {
+        Self {
+            texture
+        }
+    }
+
+    pub fn emit(&self, point: Vec3, u: f32, v: f32) -> Vec3 {
+        self.texture.value(u, v, point)
     }
 }

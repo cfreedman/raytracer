@@ -33,6 +33,7 @@ fn main() {
         Vec3::new(0., 1., 0.),
         0.,
         10.,
+        None,
     );
 
     camera.render(&world)
