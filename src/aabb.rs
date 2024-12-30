@@ -19,7 +19,9 @@ impl Aabb {
     }
 
     pub fn new_from_intervals(x: Interval, y: Interval, z: Interval) -> Self {
-        Self { x, y, z }
+        let mut res = Self { x, y, z };
+        res.pad_to_minimums();
+        res
     }
 
     pub fn new_from_points(a: Vec3, b: Vec3) -> Self {
@@ -107,6 +109,20 @@ impl Aabb {
             } else {
                 Dim::Z
             }
+        }
+    }
+
+    fn pad_to_minimums(&mut self) {
+        let delta = 0.0001;
+
+        if self.x.size() < delta {
+            self.x.expands(delta);
+        }
+        if self.y.size() < delta {
+            self.y.expands(delta);
+        }
+        if self.z.size() < delta {
+            self.z.expands(delta);
         }
     }
 }
