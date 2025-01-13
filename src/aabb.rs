@@ -6,9 +6,9 @@ use crate::vec3::{Dim, Vec3};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Aabb {
-    x: Interval,
-    y: Interval,
-    z: Interval,
+    pub x: Interval,
+    pub y: Interval,
+    pub z: Interval,
 }
 
 impl Aabb {

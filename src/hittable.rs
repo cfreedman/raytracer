@@ -1,3 +1,4 @@
+use core::f32;
 use std::f32::consts::PI;
 
 use crate::aabb::Aabb;
@@ -285,15 +286,82 @@ pub struct YRotationInstance {
 }
 
 impl YRotationInstance {
-    pub fn new(object: Box<dyn Hittable>, theta: f32) {
+    pub fn new(object: Box<dyn Hittable>, theta: f32) -> YRotationInstance {
         let radians = degrees_to_radians(theta);
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
+
+        let mut bbox = object.bounding_box();
+        let mut box_corner_1 = Vec3::ZERO;
+        let mut box_corner_2 = Vec3::ZERO;
+
+        for i in 0..2 {
+            for j in 0..2 {
+                for k in 0..2 {
+                    let (i, j, k) = (i as f32, j as f32, k as f32);
+                    let x = i * bbox.x.max + (1. - i) * bbox.x.min;
+                    let y = j * bbox.y.max + (1. - j) * bbox.y.min;
+                    let z = k * bbox.z.max + (1. - k) * bbox.z.min;
+
+                    let new_x = cos_theta * x + sin_theta * z;
+                    let new_z = -sin_theta * x + cos_theta * z;
+                    let temp = Vec3::new(new_x, y, new_z);
+
+                    for c in Dim::ALL {
+                        box_corner_1.set(c, f32::min(f32::INFINITY, temp.get(c)));
+                        box_corner_2.set(c, f32::max(f32::NEG_INFINITY, temp.get(c)));
+                    }
+                }
+            }
+        }
+
+        bbox = Aabb::new_from_points(box_corner_1, box_corner_2);
+
+        Self {
+            object,
+            theta,
+            sin_theta,
+            cos_theta,
+            bbox,
+        }
     }
 }
 
 impl Hittable for YRotationInstance {
-    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {}
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
+        // COnstruct transformed ray
+        let origin = Vec3::new(
+            self.cos_theta * ray.origin.x - self.sin_theta * ray.origin.z,
+            ray.origin.y,
+            self.sin_theta * ray.origin.x + self.cos_theta * ray.origin.z,
+        );
+        let direction = Vec3::new(
+            self.cos_theta * ray.direction.x - self.sin_theta * ray.direction.z,
+            ray.direction.y,
+            self.sin_theta * ray.direction.x + self.cos_theta * ray.direction.z,
+        );
+
+        let rotated_ray = Ray::new(origin, direction, ray.time);
+
+        // Check intersection of transformed ray with the object
+        if !self.object.hit(rotated_ray, interval, hit_data) {
+            return false;
+        };
+
+        // Rotate the hit data point and normal back appropriately
+        hit_data.point = Vec3::new(
+            self.cos_theta * hit_data.point.x + self.sin_theta * hit_data.point.z,
+            hit_data.point.y,
+            -self.sin_theta * hit_data.point.x + self.cos_theta * hit_data.point.z,
+        );
+        hit_data.normal = Vec3::new(
+            self.cos_theta * hit_data.normal.x + self.sin_theta * hit_data.normal.z,
+            hit_data.normal.y,
+            -self.sin_theta * hit_data.normal.x + self.cos_theta * hit_data.normal.z,
+        );
+
+        true
+    }
 
     fn bounding_box(&self) -> Aabb {
         self.bbox

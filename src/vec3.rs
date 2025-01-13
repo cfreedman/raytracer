@@ -56,6 +56,14 @@ impl Vec3 {
         }
     }
 
+    pub fn set(&mut self, dim: Dim, value: f32) {
+        match dim {
+            Dim::X => self.x = value,
+            Dim::Y => self.y = value,
+            Dim::Z => self.z = value,
+        };
+    }
+
     pub fn minus(&mut self) {
         self.x *= -1 as f32;
         self.y *= -1 as f32;
