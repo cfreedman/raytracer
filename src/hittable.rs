@@ -264,7 +264,7 @@ impl Hittable for TranslateInstance {
     fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
         let offset_ray = Ray::new(ray.origin - self.offset, ray.direction, ray.time);
 
-        if !self.hit(offset_ray, interval, hit_data) {
+        if !self.object.hit(offset_ray, interval, hit_data) {
             return false;
         };
 
