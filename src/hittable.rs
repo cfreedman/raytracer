@@ -3,7 +3,9 @@ use std::f32::consts::PI;
 use crate::aabb::Aabb;
 use crate::interval::*;
 use crate::material::Material;
+use crate::quad::Quad;
 use crate::ray::*;
+use crate::utilities::degrees_to_radians;
 use crate::vec3::*;
 
 #[derive(Clone)]
@@ -124,7 +126,7 @@ impl Sphere {
         let u = phi / 2. * PI;
         let v = theta / PI;
 
-        (u,v)
+        (u, v)
     }
 }
 
@@ -160,6 +162,138 @@ impl Hittable for Sphere {
 
         true
     }
+
+    fn bounding_box(&self) -> Aabb {
+        self.bbox
+    }
+}
+
+pub struct BoxObject {
+    sides: HittableList,
+}
+
+impl BoxObject {
+    pub fn new(point_a: Vec3, point_b: Vec3, mat: Material) -> BoxObject {
+        let mins = Vec3::new(
+            f32::min(point_a.x, point_b.x),
+            f32::min(point_a.y, point_b.y),
+            f32::min(point_a.z, point_b.z),
+        );
+        let maxes = Vec3::new(
+            f32::max(point_a.x, point_b.x),
+            f32::max(point_a.y, point_b.y),
+            f32::max(point_a.z, point_b.z),
+        );
+
+        let dx = Vec3::new(maxes.x - mins.x, 0., 0.);
+        let dy = Vec3::new(0., maxes.y - mins.y, 0.);
+        let dz = Vec3::new(0., 0., maxes.z - mins.z);
+
+        let mut sides = HittableList::default();
+        sides.add(Box::new(Quad::new(
+            Vec3::new(mins.x, mins.y, maxes.z),
+            dx,
+            dy,
+            mat.clone(),
+        )));
+        sides.add(Box::new(Quad::new(
+            Vec3::new(maxes.x, mins.y, maxes.z),
+            -dz,
+            dy,
+            mat.clone(),
+        )));
+        sides.add(Box::new(Quad::new(
+            Vec3::new(maxes.x, mins.y, mins.z),
+            -dx,
+            dz,
+            mat.clone(),
+        )));
+        sides.add(Box::new(Quad::new(
+            Vec3::new(mins.x, mins.y, mins.z),
+            dz,
+            dy,
+            mat.clone(),
+        )));
+        sides.add(Box::new(Quad::new(
+            Vec3::new(mins.x, maxes.y, maxes.z),
+            dx,
+            -dz,
+            mat.clone(),
+        )));
+        sides.add(Box::new(Quad::new(
+            Vec3::new(mins.x, mins.y, mins.z),
+            dx,
+            dz,
+            mat.clone(),
+        )));
+
+        Self { sides }
+    }
+}
+
+impl Hittable for BoxObject {
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
+        self.sides.hit(ray, interval, hit_data)
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        self.sides.bbox
+    }
+}
+
+pub struct TranslateInstance {
+    object: Box<dyn Hittable>,
+    offset: Vec3,
+    bbox: Aabb,
+}
+
+impl TranslateInstance {
+    pub fn new(object: Box<dyn Hittable>, offset: Vec3) -> TranslateInstance {
+        let bbox = object.bounding_box() + offset;
+
+        Self {
+            object,
+            offset,
+            bbox,
+        }
+    }
+}
+
+impl Hittable for TranslateInstance {
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {
+        let offset_ray = Ray::new(ray.origin - self.offset, ray.direction, ray.time);
+
+        if !self.hit(offset_ray, interval, hit_data) {
+            return false;
+        };
+
+        hit_data.point += self.offset;
+        true
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        self.bbox
+    }
+}
+
+pub struct YRotationInstance {
+    object: Box<dyn Hittable>,
+    theta: f32,
+    sin_theta: f32,
+    cos_theta: f32,
+    bbox: Aabb,
+}
+
+impl YRotationInstance {
+    pub fn new(object: Box<dyn Hittable>, theta: f32) {
+        let radians = degrees_to_radians(theta);
+        let sin_theta = radians.sin();
+        let cos_theta = radians.cos();
+    }
+}
+
+impl Hittable for YRotationInstance {
+    fn hit(&self, ray: Ray, interval: Interval, hit_data: &mut HitData) -> bool {}
 
     fn bounding_box(&self) -> Aabb {
         self.bbox

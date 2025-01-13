@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::vec3::{Dim, Vec3};
@@ -124,5 +126,17 @@ impl Aabb {
         if self.z.size() < delta {
             self.z.expands(delta);
         }
+    }
+
+    pub fn shift(&self, offset: Vec3) -> Self {
+        Self::new_from_intervals(self.x + offset.x, self.y + offset.y, self.z + offset.z)
+    }
+}
+
+impl Add<Vec3> for Aabb {
+    type Output = Aabb;
+
+    fn add(self, rhs: Vec3) -> Self::Output {
+        self.shift(rhs)
     }
 }

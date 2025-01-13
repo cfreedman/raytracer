@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, Sub};
+use std::ops::{Add, AddAssign, Mul, Neg, Sub};
 
 use rand::{
     distributions::{Distribution, Standard},
@@ -197,5 +197,13 @@ impl Mul<Vec3> for f32 {
 
     fn mul(self, other: Vec3) -> Self::Output {
         Self::Output::new(self * other.x, self * other.y, self * other.z)
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Self::Output {
+        Self::new(-self.x, -self.y, -self.z)
     }
 }

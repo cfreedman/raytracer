@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Interval {
     pub min: f32,
@@ -51,6 +53,10 @@ impl Interval {
         Self::new(self.min - delta / 2., self.max + delta / 2.)
     }
 
+    pub fn shift(&self, offset: f32) -> Self {
+        Self::new(self.min + offset, self.max + offset)
+    }
+
     pub const EMPTY: Self = Self {
         min: f32::INFINITY,
         max: -f32::INFINITY,
@@ -60,8 +66,13 @@ impl Interval {
         max: f32::INFINITY,
     };
 
-    pub const UNIT: Self = Self {
-        min: 0.,
-        max: 1.,
-    };
+    pub const UNIT: Self = Self { min: 0., max: 1. };
+}
+
+impl Add<f32> for Interval {
+    type Output = Interval;
+
+    fn add(self, rhs: f32) -> Self::Output {
+        self.shift(rhs)
+    }
 }
