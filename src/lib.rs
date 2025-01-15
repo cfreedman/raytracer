@@ -11,3 +11,4 @@ pub mod ray;
 pub mod texture;
 pub mod utilities;
 pub mod vec3;
+pub mod volume;

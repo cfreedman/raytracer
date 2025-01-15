@@ -12,6 +12,7 @@ pub enum Material {
     Metal(Metal),
     Dielectric(Dielectric),
     DiffuseLight(DiffuseLight),
+    Isotropic(Isotropic),
 }
 
 impl Default for Material {
@@ -35,6 +36,9 @@ impl Material {
                 dielectric.scatter(ray_in, hit_data, attenuation, scattered)
             }
             Self::DiffuseLight(_) => false,
+            Self::Isotropic(isotropic) => {
+                isotropic.scatter(ray_in, hit_data, attenuation, scattered)
+            }
         }
     }
 
@@ -44,6 +48,7 @@ impl Material {
             Self::Metal(metal) => metal.emit(point, u, v),
             Self::Dielectric(dielectric) => dielectric.emit(point, u, v),
             Self::DiffuseLight(light) => light.emit(point, u, v),
+            Self::Isotropic(isotropic) => isotropic.emit(point, u, v),
         }
     }
 }
@@ -164,12 +169,43 @@ pub struct DiffuseLight {
 
 impl DiffuseLight {
     pub fn new(texture: Texture) -> DiffuseLight {
-        Self {
-            texture
-        }
+        Self { texture }
     }
 
     pub fn emit(&self, point: Vec3, u: f32, v: f32) -> Vec3 {
         self.texture.value(u, v, point)
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Isotropic {
+    texture: Texture,
+}
+
+impl Isotropic {
+    pub fn new(texture: Texture) -> Isotropic {
+        Self { texture }
+    }
+
+    pub fn new_from_color(color: Vec3) -> Isotropic {
+        Self {
+            texture: Texture::Solid(SolidTexture::new(color)),
+        }
+    }
+
+    pub fn scatter(
+        &self,
+        ray_in: Ray,
+        hit_data: &mut HitData,
+        attenuation: &mut Vec3,
+        scattered: &mut Ray,
+    ) -> bool {
+        *scattered = Ray::new(hit_data.point, Vec3::random_unit_vector(), ray_in.time);
+        *attenuation = self.texture.value(hit_data.u, hit_data.v, hit_data.point);
+        true
+    }
+
+    pub fn emit(&self, _point: Vec3, _u: f32, _v: f32) -> Vec3 {
+        Vec3::ZERO
     }
 }
