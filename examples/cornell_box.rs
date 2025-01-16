@@ -1,3 +1,5 @@
+use std::io;
+
 use raytracer::{
     camera::Camera,
     hittable::{BoxObject, HittableList},
@@ -7,7 +9,7 @@ use raytracer::{
     vec3::Vec3,
 };
 
-fn main() {
+fn main() -> io::Result<()> {
     let mut world = HittableList::default();
 
     let red = Material::Lambertian(Lambertian::new(Texture::Solid(SolidTexture::new(
@@ -71,19 +73,17 @@ fn main() {
         white.clone(),
     )));
 
-    let camera = Camera::new(
-        1.,
-        600,
-        200,
-        50,
-        40.,
-        Vec3::new(278., 278., -800.),
-        Vec3::new(278., 278., 0.),
-        Vec3::new(0., 1., 0.),
-        0.,
-        10.,
-        Some(Vec3::ZERO),
-    );
+    let camera = Camera::init()
+        .aspect_ratio(1.)
+        .image_width(600)
+        .samples_per_pixel(200)
+        .max_depth(50)
+        .vertical_fov(40.)
+        .look_from(Vec3::new(278., 278., -800.))
+        .look_to(Vec3::new(278., 278., 0.))
+        .build();
 
-    camera.render(&world)
+    camera.render_to_disc("cornell_box", &world)?;
+
+    Ok(())
 }

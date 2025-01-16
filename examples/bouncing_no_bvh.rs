@@ -1,3 +1,5 @@
+use std::io;
+
 use raytracer::camera::Camera;
 use raytracer::hittable::{HittableList, Sphere};
 use raytracer::material::{Dielectric, Lambertian, Material, Metal};
@@ -5,7 +7,7 @@ use raytracer::texture::{CheckerTexture, Texture};
 use raytracer::utilities::{random_in_interval, random_num};
 use raytracer::vec3::Vec3;
 
-fn main() {
+fn main() -> io::Result<()> {
     // World
     let mut world = HittableList::default();
 
@@ -77,18 +79,12 @@ fn main() {
     world.add(Box::new(Sphere::new(center_2, center_2, 1., material_2)));
 
     // Camera
-    let camera = Camera::new(
-        16. / 9.,
-        400,
-        100,
-        50,
-        20.,
-        Vec3::new(13., 2., 3.),
-        Vec3::new(0., 0., 0.),
-        Vec3::new(0., 1., 0.),
-        0.6,
-        10.,
-        None,
-    );
-    camera.render(&world);
+    let camera = Camera::init()
+        .look_from(Vec3::new(13., 2., 3.))
+        .defocus_angle(0.6)
+        .build();
+
+    camera.render_to_disc("bouncing_balls", &world)?;
+
+    Ok(())
 }

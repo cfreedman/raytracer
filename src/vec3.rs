@@ -1,11 +1,17 @@
-use std::ops::{Add, AddAssign, Mul, Neg, Sub};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Mul, Neg, Sub},
+};
 
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
 };
 
-use crate::utilities::{random_in_interval, random_num};
+use crate::{
+    interval::Interval,
+    utilities::{random_in_interval, random_num},
+};
 
 // Defining Vec3 class
 #[derive(Clone, Copy, Default, Debug)]
@@ -46,6 +52,14 @@ impl Vec3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn splat(num: f32) -> Self {
+        Self {
+            x: num,
+            y: num,
+            z: num,
+        }
     }
 
     pub fn get(&self, dim: Dim) -> f32 {
@@ -164,6 +178,14 @@ impl Vec3 {
         let ref_vec_par = (-1. * (1. - ref_vec_perp.length_squared()).sqrt()) * normal;
         ref_vec_perp + ref_vec_par
     }
+
+    pub fn clamp(&self, vec1: Vec3, vec2: Vec3) -> Self {
+        let x = Interval::new(f32::min(vec1.x, vec2.x), f32::max(vec1.x, vec2.x)).clamp(self.x);
+        let y = Interval::new(f32::min(vec1.y, vec2.y), f32::max(vec1.y, vec2.y)).clamp(self.y);
+        let z = Interval::new(f32::min(vec1.z, vec2.z), f32::max(vec1.z, vec2.z)).clamp(self.z);
+
+        Vec3::new(x, y, z)
+    }
 }
 
 impl Add for Vec3 {
@@ -213,5 +235,11 @@ impl Neg for Vec3 {
 
     fn neg(self) -> Self::Output {
         Self::new(-self.x, -self.y, -self.z)
+    }
+}
+
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Vec3::ZERO, |total, vec| total + vec)
     }
 }
