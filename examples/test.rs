@@ -12,37 +12,20 @@ use raytracer::{
 fn main() -> io::Result<()> {
     let mut world = HittableList::default();
 
-    let red = Material::Lambertian(Lambertian::new(Texture::Solid(SolidTexture::new(
-        Vec3::new(0.65, 0.05, 0.05),
-    ))));
     let white = Material::Lambertian(Lambertian::new(Texture::Solid(SolidTexture::new(
         Vec3::new(0.73, 0.73, 0.73),
-    ))));
-    let green = Material::Lambertian(Lambertian::new(Texture::Solid(SolidTexture::new(
-        Vec3::new(0.12, 0.45, 0.15),
     ))));
     let light = Material::DiffuseLight(DiffuseLight::new(Texture::Solid(SolidTexture::new(
         Vec3::new(15., 15., 15.),
     ))));
 
     world.add(Box::new(Quad::new(
-        Vec3::new(555., 0., 0.),
-        Vec3::new(0., 555., 0.),
-        Vec3::new(0., 0., 555.),
-        green,
-    )));
-    world.add(Box::new(Quad::new(
-        Vec3::new(0., 0., 0.),
-        Vec3::new(0., 555., 0.),
-        Vec3::new(0., 0., 555.),
-        red,
-    )));
-    world.add(Box::new(Quad::new(
         Vec3::new(343., 554., 332.),
         Vec3::new(-130., 0., 0.),
         Vec3::new(0., 0., -105.),
         light,
     )));
+
     world.add(Box::new(Quad::new(
         Vec3::new(0., 0., 0.),
         Vec3::new(555., 0., 0.),
@@ -53,12 +36,6 @@ fn main() -> io::Result<()> {
         Vec3::new(555., 555., 555.),
         Vec3::new(-555., 0., 0.),
         Vec3::new(0., 0., -555.),
-        white.clone(),
-    )));
-    world.add(Box::new(Quad::new(
-        Vec3::new(0., 0., 555.),
-        Vec3::new(555., 0., 0.),
-        Vec3::new(0., 555., 0.),
         white.clone(),
     )));
 
@@ -77,13 +54,14 @@ fn main() -> io::Result<()> {
         .aspect_ratio(1.)
         .image_width(600)
         .samples_per_pixel(50)
-        .max_depth(10)
+        .max_depth(20)
         .vertical_fov(40.)
         .look_from(Vec3::new(278., 278., -800.))
         .look_to(Vec3::new(278., 278., 0.))
+        .background(Vec3::ZERO)
         .build();
 
-    camera.render_to_disc("cornell_box", &world)?;
+    camera.render_to_disc("test", &world)?;
 
     Ok(())
 }

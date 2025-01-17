@@ -206,7 +206,7 @@ impl BoxObject {
         sides.add(Box::new(Quad::new(
             Vec3::new(maxes.x, mins.y, mins.z),
             -dx,
-            dz,
+            dy,
             mat.clone(),
         )));
         sides.add(Box::new(Quad::new(

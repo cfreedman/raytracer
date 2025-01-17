@@ -151,11 +151,11 @@ impl Camera {
         let mut scattered = Ray::default();
         if let Some(material) = hit_data.clone().material {
             let emitted_color = material.emit(hit_data.point, hit_data.u, hit_data.v);
-            if material.scatter(ray, &mut hit_data, &mut attenuation, &mut scattered) {
-                return emitted_color + attenuation * self.ray_color(scattered, depth - 1, world);
+            if !material.scatter(ray, &mut hit_data, &mut attenuation, &mut scattered) {
+                return emitted_color;
             }
 
-            return emitted_color;
+            return emitted_color + attenuation * self.ray_color(scattered, depth - 1, world);
         }
 
         Vec3::ZERO
