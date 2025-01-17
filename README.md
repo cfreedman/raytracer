@@ -44,3 +44,11 @@ Metallic Materials
 Checkered Textures
 
 ![Checkered Textures](output/checkered.png)
+
+Cornell Box
+
+![Cornell Box](output/cornell_box.png)
+
+Volumes
+
+![Volumes](output/volumes.png)
