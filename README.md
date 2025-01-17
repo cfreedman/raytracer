@@ -28,4 +28,8 @@ See some example outputs below!
 
 ### Cornell Box
 
-![cornell-box](image.ppm)
+[!Motion blur bouncing balls](output/bouncing_balls.png)
+
+[!Metallic materials](output/metal.png)
+
+[!Checkered Textures](output/checkered.png)
