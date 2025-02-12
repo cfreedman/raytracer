@@ -1,6 +1,8 @@
+use std::io;
+
 use raytracer::{camera::Camera, hittable::HittableList, material::{Lambertian, Material}, quad::Quad, vec3::Vec3};
 
-fn main() {
+fn main() -> io::Result<()> {
     let mut world = HittableList::default();
 
     // Materials
@@ -18,18 +20,20 @@ fn main() {
     world.add(Box::new(Quad::new(Vec3::new(-2.,-3.,5.),Vec3::new(4.,0.,0.),Vec3::new(0.,0.,-4.),lower_teal)));
 
     // Camera
-    let camera = Camera::new(
-        1.,
-        400,
-        100,
-        50,
-        80.,
-        Vec3::new(0.,0.,9.),
-        Vec3::new(0., 0., 0.),
-        Vec3::new(0., 1., 0.),
-        0.,
-        10.,
-        None
-    );
-    camera.render(&world);
+    let camera = Camera::init()
+        .aspect_ratio(1.)
+        .image_width(1000)
+        .samples_per_pixel(100)
+        .max_depth(50)
+        .vertical_fov(80.)
+        .look_from(Vec3::new(0.,0.,9.))
+        .look_to(Vec3::new(0.,0.,0.))
+        .vec_up(Vec3::new(0.,1.,0.))
+        .defocus_angle(0.)
+        .focus_distance(10.)
+        .build();
+
+    camera.render_to_disc("quad", &world)?;
+
+    Ok(())
 }

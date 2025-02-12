@@ -70,7 +70,7 @@ impl Hittable for Quad {
         hit_data.hit_along_ray = t_intersection;
         hit_data.point = point_intersection;
         hit_data.material = Some(self.material.clone());
-        hit_data.set_face_normal(ray, self.normal);
+        hit_data.set_face_normal(ray, self.unscaled_normal);
         hit_data.u = alpha;
         hit_data.v = beta;
 
